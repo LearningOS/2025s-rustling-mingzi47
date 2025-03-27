@@ -70,13 +70,51 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+        where T: std::cmp::PartialOrd + Copy
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        let mut ret = LinkedList::<T>::new();
+        let mut node_a = list_a.start;
+        let mut node_b = list_b.start;
+
+        let get_val = |ptr: NonNull<Node<T>>| -> T {
+            unsafe {
+                (*ptr.as_ptr()).val.clone()
+            }
+        };
+
+        let get_next = |ptr : NonNull<Node<T>>| ->Option<NonNull<Node<T>>> {
+               unsafe{ (*ptr.as_ptr()).next }
+        };
+
+        while node_a != None && node_b != None  {
+            if let [Some(p_a), Some(p_b)] = [node_a, node_b] {
+                let [a, b] = [get_val(p_a), get_val(p_b)];
+                if a <= b {
+                    ret.add(a);   
+                    node_a = get_next(p_a);
+                    println!("{:#?}\n", node_a)
+                } else {
+                    ret.add(b);
+                    node_b = get_next(p_b);
+                }
+            }
+
         }
+
+        while node_a != None {
+            if let Some(p_a) = node_a {
+                ret.add(get_val(p_a));
+                node_a = get_next(p_a);
+            }
+        }
+        while node_b != None {
+            if let Some(p_b) = node_b {
+                ret.add(get_val(p_b));
+                node_b = get_next(p_b);
+            }
+        }
+		//TODO
+        ret
 	}
 }
 
