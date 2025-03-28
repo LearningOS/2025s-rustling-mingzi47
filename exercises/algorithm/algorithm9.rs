@@ -1,10 +1,11 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
 
-use std::cmp::Ord;
+use std::cmp::{max, Ord};
 use std::default::Default;
+use std::fmt::Display;
 
 pub struct Heap<T>
 where
@@ -38,9 +39,10 @@ where
     pub fn add(&mut self, value: T) {
         //TODO
         self.items.push(value);
-        self.count+=1;
+        self.count += 1;
 
-        let parent_i = self.parent_idx(self.count);
+        let idx = self.count;
+        self.up(idx);
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -61,7 +63,49 @@ where
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
         //TODO
-		0
+        let l_i = self.left_child_idx(idx);
+        let r_i = self.right_child_idx(idx);
+        if r_i > self.count {
+            return l_i;
+        }
+
+        let l_v = &self.items[l_i];
+        let r_v = &self.items[r_i];
+        if (self.comparator)(l_v, r_v) {
+            l_i
+        } else {
+            r_i
+        }
+    }
+
+    fn up(&mut self, idx: usize) {
+        let parent_i = self.parent_idx(idx);
+        if parent_i == 0 {
+            return;
+        }
+
+        if !(self.comparator)(&self.items[idx], &self.items[parent_i]) {
+            return;
+        }
+
+        self.items.swap(idx, parent_i);
+        self.up(parent_i);
+    }
+
+    fn down(&mut self, idx: usize) {
+        if !self.children_present(idx) {
+            return;
+        }
+
+        let v = &self.items[idx];
+        let c_i = self.smallest_child_idx(idx);
+        // let c_v = self.items.get(c_i - 1).inspect(|x| println!("{}", x));
+        if let Some(c_v) = self.items.get(c_i) {
+            if (self.comparator)(c_v, v) {
+                self.items.swap(idx, c_i);
+                self.down(c_i);
+            }
+        }
     }
 }
 
@@ -88,7 +132,17 @@ where
 
     fn next(&mut self) -> Option<T> {
         //TODO
-		None
+        if self.count == 0 {
+            return None;
+        }
+
+        self.items.swap(1, self.count);
+        self.count -= 1;
+        let ret = self.items.pop();
+
+        self.down(1);
+
+        ret
     }
 }
 
@@ -149,8 +203,11 @@ mod tests {
         heap.add(11);
         assert_eq!(heap.len(), 4);
         assert_eq!(heap.next(), Some(11));
+        assert_eq!(heap.len(), 3);
         assert_eq!(heap.next(), Some(9));
+        assert_eq!(heap.len(), 2);
         assert_eq!(heap.next(), Some(4));
+        assert_eq!(heap.len(), 1);
         heap.add(1);
         assert_eq!(heap.next(), Some(2));
     }
